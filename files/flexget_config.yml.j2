@@ -1,0 +1,101 @@
+tasks:
+  download:
+    priority: 1
+    # http://discuss.flexget.com/t/issues-with-kickass-rss-kickass-so-vs-kickass-to/644
+    verify_ssl_certificates: no
+    rss:
+      url: 'http://kickass.to/search/ettv/?rss=1'
+      link:
+        - torrent:magnetURI
+      ascii: yes
+    regexp:
+      from: title
+      reject:
+        - subbed
+        - subs
+        - NL
+        - Subs
+        - SUB
+        - .ESP.
+        - dubbed
+        - ESPAOL
+        - FASTSUB
+        - VOSTFR
+        - Subtitulado
+        - SWESUB
+    content_filter:
+      reject:
+        - '*.rar'
+        - '*.zip'
+        - '*.wmv'
+    series:
+      settings:
+        ok_quality:
+          exact: yes
+          propers: 3 days
+          quality: webdl|hdtv <1080p
+      ok_quality: {{ series }}
+
+    transmission:
+      host: localhost
+      port: {{ transmission.port }}
+      username: {{ transmission.username }}
+      password: "{{ transmission.username }}"
+      include_subs: Yes
+      magnetization_timeout: 30
+      skip_files:
+        - '*.nfo'
+        - '*.sfv'
+        - '*[sS]ample*'
+        - '*.txt'
+        - '*.jpeg'
+        - '*.jpg'
+  subtitles:
+    priority: 2
+    disable: builtins
+    find:
+      path:
+        - /var/plex/complete
+      regexp:  '.*\.(mp4|mkv|avi)$'
+      recursive: yes
+    accept_all: yes
+    regexp:
+      reject:
+       - '.*[sS]ample.*'
+    periscope:
+      languages:
+        - es
+      overwrite: yes
+  sort:
+    priority: 3
+    disable: builtins
+    find:
+      path: /var/plex/complete
+      mask: '*.srt'
+      recursive: yes
+    accept_all: yes
+    seen: local
+    thetvdb_lookup: yes
+    all_series:
+      parse_only: yes
+    move:
+      to: /var/plex/series/{{ tvdb_series_name }}/
+      filename: {% raw %}'{{ tvdb_series_name }} - {{ series_id }} - {{ tvdb_ep_name}}{{ location | pathext }}'{% endraw %}
+      clean_source: 100
+      along:
+        - mkv
+        - mp4
+        - avi
+  clean:
+    priority: 5
+    clean_transmission:
+      host: localhost
+      port: {{ transmission.port }}
+      username: {{ transmission.username }}
+      password: "{{ transmission.username }}"
+      transmission_seed_limits: yes
+      finished_for: 1 hours
+schedules:
+  - tasks: '*'
+    interval:
+      minutes: 30

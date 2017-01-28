@@ -1,0 +1,74 @@
+---
+
+- hosts: all
+  gather_facts: true
+  sudo: yes
+  tasks:
+    - name: "Install transmission server and pip"
+      apt:
+        pkg: {{ item }}
+        state: latest
+        cache_valid_time: 300
+        update_cache: yes
+      with_items:
+           - transmission-daemon
+           - python-pip
+
+    - name: "Install Flexget and Periscope"
+      pip:
+        name: {{ item }}
+        state: latest
+      with_items:
+           - flexget
+           - transmissionrpc
+           - periscope
+           - functools32
+
+    - name: "Download tool to easily update Plex"
+      git:
+        repo: https://github.com/mrworf/plexupdate.git
+        dest: /tmp/plexupdate
+
+    - name: "Check if Plex is installed"
+      script: /tmp/plexupdate/plexupdate.sh
+      register: deb_check
+      changed_when: deb_check.rc == 1
+
+    - name: "Ensure group exists"
+      group:
+        name: "{{ flexget_group }}"
+        state: present
+        system: yes
+
+    - name: "Ensure user exists"
+      user:
+        name: "{{ flexget_user }}"
+        group: "{{ flexget_group }}"
+        createhome: no
+        shell: /bin/false
+        system: yes
+        state: present
+
+    - name: "Create flexget directory"
+      file:
+        path: /opt/flexget
+        state: directory
+        owner: "{{ user }}"
+        group: "{{ group }}"
+        mode: 0755
+
+    - name: "Config file for flexget"
+      template:
+        src: flexget_config.yml.j2
+        dest: /opt/flexget/config.yml
+        backup: yes
+        mode: 0644
+
+    - name: "Create upstart service for flexget"
+      template:
+        src: upstart_service.conf.j2
+        dest: /etc/init/flexget.conf
+        backup: yes
+        mode: 0644
+
+    - service: name=flexget state=restarted

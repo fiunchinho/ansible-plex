@@ -1,0 +1,19 @@
+---
+
+flexget_directory: /opt/flexget
+flexget_config_file: "{{ flexget_directory }}/config.yml"
+flexget_log_level: verbose
+flexget_user: debian-transmission
+flexget_group: debian-transmission
+
+transmission:
+  username: plex
+  password: transmission
+  port: 9091
+
+series:
+  - Louie
+  - Game of Thrones
+  - The Walking Dead
+  - Fear the Walking Dead
+  - True Detective

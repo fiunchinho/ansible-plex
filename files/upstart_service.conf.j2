@@ -1,0 +1,13 @@
+#!/bin/bash
+# Flexget daemon autostart
+
+description "Flexget daemon"
+author "Jose Armesto"
+
+start on (filesystem and networking) or runlevel [2345]
+stop on runlevel [016]
+
+respawn
+respawn limit 5 30
+
+exec start-stop-daemon -S -c {{ flexget_user }}:{{ flexget_group }} -x /usr/local/bin/flexget -- -c {{ flexget_config_file }} -L {{ flexget_log_level }} daemon start
